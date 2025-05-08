@@ -1,5 +1,4 @@
 # WNT_vertebrates
- Pipeline to mine WNT genes from vertebrate genomes
 
 ## I - WNT gene mining procedure
 
