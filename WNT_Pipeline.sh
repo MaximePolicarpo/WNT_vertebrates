@@ -39,25 +39,13 @@ prot_name=$6
 number_of_threads=$7
 
 
-
-#genome=/scicore/home/salzburg/polica0000/Vertebrates_Taste_Receptors/Danio_rerio/GCA_000002035.4_GRCz11_genomic.trimmed.fna
-##target_DB=/scicore/home/salzburg/polica0000/WNT_Database/Wnt_DB.fa
-#target_DB=/scicore/home/salzburg/polica0000/WNT_Database/Database_creation/Candidate_WNT_genes_filtered_length.prot
-#target_outgroup_DB=/scicore/home/salzburg/polica0000/Uniprot_db/uniprot_sprot.fasta
-#scripts_folder_location=/scicore/home/salzburg/polica0000/WNT_Database/ ; scripts_location=$( echo "$scripts_folder_location" | sed 's/\/$//' )
-#maximum_intron_length=60000
-#number_of_threads=8
-#prot_name=Wnt
-
-
-
 #Makeblastdb so we can blast genes against the genome
 
 if test -f "$genome.ndb" ; then echo "Genome blast database already exist" ; else makeblastdb -in $genome -dbtype nucl ; fi 
 if test -f "$genome.fai" ; then echo "Genome fai file already exist" ; else samtools faidx $genome ; fi 
 
 
-#Perform tblastn using known V2R genes against the genome with an evalue of 1e-5
+#Perform tblastn using known WNT genes against the genome with an evalue of 1e-5
 
 cp $target_DB ./Target_protein_db.prot
 makeblastdb -in Target_protein_db.prot -dbtype prot
