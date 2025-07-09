@@ -2108,14 +2108,8 @@ for(curr_wnt in WNT_subfam_list) {
 
 pGLS_limb_df$pvalue <- as.numeric(pGLS_limb_df$pvalue)
 pGLS_limb_df$R2 <- as.numeric(pGLS_limb_df$R2)
-
-pGLS_limb_df$adj.pvalue <- adjust_pvalue(pGLS_limb_df$pvalue, method="bonferroni")
-
-
-pGLS_limb_df %>%
-  filter(adj.pvalue < 0.05)
-
-
+pGLS_limb_df$adj.pvalue <- p.adjust(pGLS_limb_df$pvalue, method="fdr")
+pGLS_limb_df %>% filter(adj.pvalue < 0.05)
 
 
 Wnt_all_lepido_amphib_long <- 
@@ -2202,4 +2196,66 @@ ggtree(lepido_amphibia_tree_filt, size = 1, layout="circular") %<+% dNdS_copynb_
   geom_tiplab(size = 2, fontface=3, offset=18)  +
   theme(legend.position = "none") 
 
+#Relaunch pGLS without 
 
+Wnt_all_lepido_amphib_woLerista <- 
+  Wnt_all_lepido_amphib %>%
+  filter(species != "Lerista_edwardsae")
+
+
+caper_dNdS_copynb <- 
+  comparative.data(
+    phy = vertebrate_tree,
+    data = Wnt_all_lepido_amphib_woLerista,
+    names.col = species, vcv = TRUE,
+    na.omit = FALSE, warn.dropped = TRUE)
+
+
+pGLS_limb_df_woLerista <- as.data.frame(NULL)
+for(curr_wnt in WNT_subfam_list) {
+  
+  
+  nrow_caecilian <-
+    nrow(Wnt_all_lepido_amphib %>%
+           filter(! is.na(.data[[curr_wnt]])) %>%
+           filter(clade == "Caecilian"))
+  nrow_snakes <- 
+    nrow(Wnt_all_lepido_amphib %>%
+           filter(! is.na(.data[[curr_wnt]])) %>%
+           filter(clade == "Snakes"))
+  nrow_limbless_lizard <- 
+    nrow(Wnt_all_lepido_amphib %>%
+           filter(! is.na(.data[[curr_wnt]])) %>%
+           filter(clade == "Limbless_lizard"))  
+  
+  
+  
+  curr_formula_dNdS <- as.formula(paste(curr_wnt, " ~ ", "limb", sep=""))
+  
+  
+  if((nrow_caecilian > 0) & (nrow_snakes > 0) & (nrow_limbless_lizard > 0)){
+    
+    pGLS_dNdS <- pgls(curr_formula_dNdS, data = caper_dNdS_copynb, lambda = "ML")
+    
+    sum_fit_phy <- summary(pGLS_dNdS)
+    PGLS_pente =   formatC(sum_fit_phy$coefficients[2], digits = 3)
+    PGLS_r2 =      formatC(sum_fit_phy$adj.r.squared, digits = 2)
+    PGLS_pvalue =  formatC(sum_fit_phy$coefficients[8], digits = 3)
+    if (PGLS_pvalue == "   0"){ PGLS_pvalue = 2.2e-16}
+    pGLS_lambda <- sum_fit_phy$param[2]
+    print(PGLS_pvalue)
+    curr_df_dNdS <- as.data.frame(cbind(curr_wnt, "dNdS", PGLS_r2, PGLS_pvalue, pGLS_lambda))
+    colnames(curr_df_dNdS) <- c("subfamily", "response", "R2", "pvalue", "lambda")
+    
+    
+    
+    pGLS_limb_df_woLerista <- rbind(pGLS_limb_df_woLerista, curr_df_dNdS)
+    
+  } 
+  
+}
+
+pGLS_limb_df_woLerista$pvalue <- as.numeric(pGLS_limb_df_woLerista$pvalue)
+pGLS_limb_df_woLerista$R2 <- as.numeric(pGLS_limb_df_woLerista$R2)
+pGLS_limb_df_woLerista$adj.pvalue <- p.adjust(pGLS_limb_df_woLerista$pvalue, method="fdr")
+pGLS_limb_df_woLerista %>% filter(adj.pvalue < 0.05)
